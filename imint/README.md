@@ -3,10 +3,10 @@ images used for development enviroment in imint group
 
 
 
-## with docker build (in git bash)
+## with podman build (in git bash)
 ~~~
-docker build --progress plain -f Dockerfile_UBI93 --progress plain -t devopsteamelt/dev_imageimint:v1.0.0 . 2>&1 |  tee res.txt
-docker push devopsteamelt/dev_imageimint:v1.0.0
+podman build --progress plain -f dev_imageimint --progress plain -t devopsteamelt/dev_imageimint:v1.0.0 . 2>&1 |  tee res.txt
+podman push devopsteamelt/dev_imageimint:v1.1.0
 ~~~
 
 ## tag version is v1.0.0

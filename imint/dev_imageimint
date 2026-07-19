@@ -92,6 +92,85 @@ RUN curl -k https://files.devops.elta.co.il/scripts/addEltaCert.sh | sh && \
     rm -rf /var/cache/dnf && \
     mkdir -p /var/run/sshd
 
+# install lttng
+RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    printf '%s\n' \
+    '[cs9-baseos]' \
+    'name=CentOS Stream 9 BaseOS' \
+    'baseurl=https://mirror.stream.centos.org/9-stream/BaseOS/$basearch/os/' \
+    'enabled=1' \
+    'gpgcheck=0' \
+    > /etc/yum.repos.d/cs9-baseos.repo && \
+    printf '%s\n' \
+    '[cs9-appstream]' \
+    'name=CentOS Stream 9 AppStream' \
+    'baseurl=https://mirror.stream.centos.org/9-stream/AppStream/$basearch/os/' \
+    'enabled=1' \
+    'gpgcheck=0' \
+    > /etc/yum.repos.d/cs9-appstream.repo && \
+    printf '%s\n' \
+    '[cs9-crb]' \
+    'name=CentOS Stream 9 CRB' \
+    'baseurl=https://mirror.stream.centos.org/9-stream/CRB/$basearch/os/' \
+    'enabled=1' \
+    'gpgcheck=0' \
+    > /etc/yum.repos.d/cs9-crb.repo && \
+    dnf clean all && \
+    dnf makecache && \
+    dnf install -y \
+        elfutils-libelf-devel \
+        pkgconf-pkg-config \
+        libxml2-devel \
+        popt-devel \
+        numactl-devel \
+        libbabeltrace-devel \
+        bzip2 && \
+    \
+    cd "$(mktemp -d)" && \
+    wget https://lttng.org/files/urcu/userspace-rcu-latest-0.13.tar.bz2 && \
+    bzip2 -dc userspace-rcu-latest-0.13.tar.bz2 | tar -xf - && \
+    cd userspace-rcu-0.13.* && \
+    ./configure --prefix=/usr && \
+    make -j"$(nproc)" && \
+    make install && \
+    ldconfig && \
+    \
+    cd "$(mktemp -d)" && \
+    wget https://lttng.org/files/lttng-ust/lttng-ust-latest-2.13.tar.bz2 && \
+    bzip2 -dc lttng-ust-latest-2.13.tar.bz2 | tar -xf - && \
+    cd lttng-ust-2.13.* && \
+    ./configure --prefix=/usr --disable-numa && \
+    make -j"$(nproc)" && \
+    make install && \
+    ldconfig && \
+    \
+    export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/lib64/pkgconfig:$PKG_CONFIG_PATH && \
+    export LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH && \
+    cd "$(mktemp -d)" && \
+    wget https://lttng.org/files/lttng-tools/lttng-tools-latest-2.13.tar.bz2 && \
+    bzip2 -dc lttng-tools-latest-2.13.tar.bz2 | tar -xf - && \
+    cd lttng-tools-2.13.* && \
+    ./configure --prefix=/usr && \
+    make -j"$(nproc)" && \
+    make install && \
+    ldconfig && \
+    \
+    mkdir -p /opt/sources && \
+    cd /opt/sources && \
+    wget https://lttng.org/files/lttng-modules/lttng-modules-latest-2.13.tar.bz2 && \
+    rm -f /etc/yum.repos.d/cs9-baseos.repo \
+        /etc/yum.repos.d/cs9-appstream.repo \
+        /etc/yum.repos.d/cs9-crb.repo && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf
+
+COPY install-lttng-kernel-offline.sh /opt/kernel_rpms/install-lttng-kernel-offline.sh
+
+RUN chmod +x /opt/kernel_rpms/install-lttng-kernel-offline.sh && \
+    curl -f -L -o /opt/kernel_rpms/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm https://repo.almalinux.org/vault/9.6/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm && \
+    curl -f -L -o /opt/kernel_rpms/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm https://repo.almalinux.org/vault/9.3/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm && \
+    curl -f -L -o /opt/kernel_rpms/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm https://repo.almalinux.org/vault/9.2/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm
+
 # Install gcc-toolset-13 and set it as the default gcc/g++ without scl/ENV
 RUN set -eux && \
     echo "/opt/rh/gcc-toolset-13/root/usr/lib64" > /etc/ld.so.conf.d/gcc-toolset-13.conf && \
