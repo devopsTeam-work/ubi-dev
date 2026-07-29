@@ -38,18 +38,27 @@ case "${KVER}" in
   5.14.0-570.12.1.el9_6.x86_64)
     KERNEL_RPM="${RPM_DIR}/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm"
     ;;
+  5.14.0-503.22.1.el9_5.x86_64|5.14.0-503.22.1.el9_5.x86_64+rt)
+    KERNEL_RPM="${RPM_DIR}/kernel-rt-devel-5.14.0-503.22.1.el9_5.x86_64.rpm"
+    ;;
   5.14.0-362.8.1.el9_3.x86_64)
     KERNEL_RPM="${RPM_DIR}/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm"
     ;;
   5.14.0-284.11.1.el9_2.x86_64)
     KERNEL_RPM="${RPM_DIR}/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm"
     ;;
+  4.18.0-372.9.1.el8.x86_64)
+    KERNEL_RPM="${RPM_DIR}/kernel-devel-4.18.0-372.9.1.el8.x86_64.rpm"
+    ;;
   *)
     echo "ERROR: Unsupported kernel: ${KVER}"
     echo "Supported kernels:"
     echo "  - 5.14.0-570.12.1.el9_6.x86_64"
+    echo "  - 5.14.0-503.22.1.el9_5.x86_64"
+    echo "  - 5.14.0-503.22.1.el9_5.x86_64+rt"
     echo "  - 5.14.0-362.8.1.el9_3.x86_64"
     echo "  - 5.14.0-284.11.1.el9_2.x86_64"
+    echo "  - 4.18.0-372.9.1.el8.x86_64"
     exit 1
     ;;
 esac

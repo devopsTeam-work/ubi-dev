@@ -167,10 +167,22 @@ RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.n
 COPY install-lttng-kernel-offline.sh /opt/kernel_rpms/install-lttng-kernel-offline.sh
 
 RUN chmod +x /opt/kernel_rpms/install-lttng-kernel-offline.sh && \
-    curl -f -L -o /opt/kernel_rpms/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm https://repo.almalinux.org/vault/9.6/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm && \
-    curl -f -L -o /opt/kernel_rpms/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm https://repo.almalinux.org/vault/9.3/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm && \
-    curl -f -L -o /opt/kernel_rpms/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm https://repo.almalinux.org/vault/9.2/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm
-
+    curl -f -L \
+        -o /opt/kernel_rpms/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm \
+        https://repo.almalinux.org/vault/9.6/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-570.12.1.el9_6.x86_64.rpm && \
+    curl -f -L \
+        -o /opt/kernel_rpms/kernel-rt-devel-5.14.0-503.22.1.el9_5.x86_64.rpm \
+        https://www-ftp.lip6.fr/pub/linux/distributions/AlmaLinux-vault/9.5/RT/x86_64/os/Packages/kernel-rt-devel-5.14.0-503.22.1.el9_5.x86_64.rpm && \
+    curl -f -L \
+        -o /opt/kernel_rpms/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm \
+        https://repo.almalinux.org/vault/9.3/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-362.8.1.el9_3.x86_64.rpm && \
+    curl -f -L \
+        -o /opt/kernel_rpms/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm \
+        https://repo.almalinux.org/vault/9.2/AppStream/x86_64/os/Packages/kernel-devel-5.14.0-284.11.1.el9_2.x86_64.rpm && \
+    curl -f -L \
+        -o /opt/kernel_rpms/kernel-devel-4.18.0-372.9.1.el8.x86_64.rpm \
+        https://dl.rockylinux.org/vault/rocky/8.6/BaseOS/x86_64/os/Packages/k/kernel-devel-4.18.0-372.9.1.el8.x86_64.rpm
+        
 # Install gcc-toolset-13 and set it as the default gcc/g++ without scl/ENV
 RUN set -eux && \
     echo "/opt/rh/gcc-toolset-13/root/usr/lib64" > /etc/ld.so.conf.d/gcc-toolset-13.conf && \
