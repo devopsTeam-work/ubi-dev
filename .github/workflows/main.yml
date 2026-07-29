@@ -1,0 +1,149 @@
+name: Docker Image CI
+
+# --------------------------------------------------------------------
+# Supported Git tag formats:
+#
+#   dev_imageimint.v<version>
+#   dev_image_ubi93.v<version>
+#
+# Examples:
+#
+#   dev_imageimint.v1.0.0
+#     -> devopsteamelt/dev_imageimint:v1.0.0
+#
+#   dev_image_ubi93.v2.3.1
+#     -> devopsteamelt/dev_image_ubi93:v2.3.1
+#
+# Only the image selected by the Git tag is built and pushed.
+# --------------------------------------------------------------------
+
+on:
+  push:
+    tags:
+      - 'dev_imageimint.v*'
+      - 'dev_image_ubi93.v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download the repository content to the GitHub Actions runner.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Parse the Git tag and select the correct:
+      #   - Docker Hub repository
+      #   - Docker image tag
+      #   - Build context
+      #   - Dockerfile
+      #
+      # Example:
+      #   dev_imageimint.v1.0.0
+      #
+      # Becomes:
+      #   IMAGE_NAME=dev_imageimint
+      #   IMAGE_TAG=v1.0.0
+      #   BUILD_CONTEXT=./imint
+      #   DOCKERFILE=./imint/dev_imageimint
+      - name: Parse Git tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Pushed Git tag: ${GITHUB_REF_NAME}"
+
+          case "${GITHUB_REF_NAME}" in
+            dev_imageimint.v*)
+              IMAGE_NAME="dev_imageimint"
+              IMAGE_TAG="${GITHUB_REF_NAME#dev_imageimint.}"
+              BUILD_CONTEXT="./imint"
+              DOCKERFILE="./imint/dev_imageimint"
+              ;;
+
+            dev_image_ubi93.v*)
+              IMAGE_NAME="dev_image_ubi93"
+              IMAGE_TAG="${GITHUB_REF_NAME#dev_image_ubi93.}"
+              BUILD_CONTEXT="./gen"
+              DOCKERFILE="./gen/Dockerfile_UBI93"
+              ;;
+
+            *)
+              echo "ERROR: Unsupported Git tag: ${GITHUB_REF_NAME}"
+              echo "Supported formats:"
+              echo "  dev_imageimint.v1.0.0"
+              echo "  dev_image_ubi93.v1.0.0"
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "ERROR: Docker image tag is empty."
+            exit 1
+          fi
+
+          if [[ ! -d "${BUILD_CONTEXT}" ]]; then
+            echo "ERROR: Build context not found: ${BUILD_CONTEXT}"
+            exit 1
+          fi
+
+          if [[ ! -f "${DOCKERFILE}" ]]; then
+            echo "ERROR: Dockerfile not found: ${DOCKERFILE}"
+            exit 1
+          fi
+
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> "${GITHUB_ENV}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "${GITHUB_ENV}"
+          echo "BUILD_CONTEXT=${BUILD_CONTEXT}" >> "${GITHUB_ENV}"
+          echo "DOCKERFILE=${DOCKERFILE}" >> "${GITHUB_ENV}"
+
+          echo
+          echo "Docker repository: ${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}"
+          echo "Docker tag:        ${IMAGE_TAG}"
+          echo "Build context:     ${BUILD_CONTEXT}"
+          echo "Dockerfile:        ${DOCKERFILE}"
+
+      # Log in to Docker Hub using the repository secrets:
+      #   DEVOPS_TEAM_USERNAME
+      #   DEVOPS_TEAM_PASSWORD
+      - name: Login to Docker Hub
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          printf '%s' "${{ secrets.DEVOPS_TEAM_PASSWORD }}" | \
+            docker login \
+              --username "${{ secrets.DEVOPS_TEAM_USERNAME }}" \
+              --password-stdin
+
+      # Build the selected Docker image.
+      #
+      # The Docker tag keeps the "v" prefix:
+      #   v1.0.0
+      #
+      # No "latest" tag is created.
+      - name: Build Docker image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker build \
+            --file "${DOCKERFILE}" \
+            --tag "${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}" \
+            "${BUILD_CONTEXT}"
+
+      # Push only the version tag.
+      - name: Push Docker image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker push \
+            "${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+      # Print the final image name in the workflow log.
+      - name: Show pushed image
+        shell: bash
+        run: |
+          echo "Successfully pushed:"
+          echo "  ${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}"
