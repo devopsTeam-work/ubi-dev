@@ -9,10 +9,10 @@ name: Docker Image CI
 # Examples:
 #
 #   dev_imageimint.v1.0.0
-#     -> devopsteamelt/dev_imageimint:v1.0.0
+#     -> devopsteamwork/dev_imageimint:v1.0.0
 #
 #   dev_image_ubi93.v2.3.1
-#     -> devopsteamelt/dev_image_ubi93:v2.3.1
+#     -> devopsteamwork/dev_image_ubi93:v2.3.1
 #
 # Only the image selected by the Git tag is built and pushed.
 # --------------------------------------------------------------------
@@ -26,6 +26,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAMESPACE: devopsteamwork
 
     steps:
       # Download the repository content to the GitHub Actions runner.
@@ -98,7 +100,7 @@ jobs:
           echo "DOCKERFILE=${DOCKERFILE}" >> "${GITHUB_ENV}"
 
           echo
-          echo "Docker repository: ${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}"
+          echo "Docker repository: ${IMAGE_NAMESPACE}/${IMAGE_NAME}"
           echo "Docker tag:        ${IMAGE_TAG}"
           echo "Build context:     ${BUILD_CONTEXT}"
           echo "Dockerfile:        ${DOCKERFILE}"
@@ -129,7 +131,7 @@ jobs:
 
           docker build \
             --file "${DOCKERFILE}" \
-            --tag "${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}" \
+            --tag "${IMAGE_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}" \
             "${BUILD_CONTEXT}"
 
       # Push only the version tag.
@@ -139,11 +141,11 @@ jobs:
           set -euo pipefail
 
           docker push \
-            "${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}"
+            "${IMAGE_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
 
       # Print the final image name in the workflow log.
       - name: Show pushed image
         shell: bash
         run: |
           echo "Successfully pushed:"
-          echo "  ${{ secrets.DEVOPS_TEAM_USERNAME }}/${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "  ${IMAGE_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
