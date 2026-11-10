@@ -54,7 +54,6 @@ RUN curl -k https://files.devops.elta.co.il/scripts/addEltaCert.sh | sh && \
         bash \
         glibc-devel \
         libstdc++-devel \
-        libstdc++-static \
         perl \
         which \
         gzip \
